@@ -1644,25 +1644,28 @@ section,
   margin-bottom: 60px;
   position: relative;
 }
-
 .events .card-img {
-  width: calc(100% + 60px);
-  margin-left: -30px;
-  overflow: hidden;
+  width: 100%; /* Ensures the container doesn't exceed its parent's width */
+  height: 300px; /* Set a fixed height for the container */
+  margin-left: 0; /* Align container properly */
+  overflow: hidden; /* Ensure no overflow from the image */
   z-index: 9;
   border-radius: 0;
+  position: relative; /* Optional, to position child elements */
 }
 
 .events .card-img img {
-  max-width: 100%;
-  transition: all 0.3s ease-in-out;
+  width: 500px; /* Ensures the image takes the full width of the container */
+  height: 100%; /* Ensures the image takes the full height of the container */
+  object-fit: cover; /* Maintains aspect ratio and fills the container */
+  transition: all 0.3s ease-in-out; /* Smooth animation for hover effects */
 }
 
 .events .card-body {
   z-index: 10;
   background: var(--surface-color);
   border-top: 4px solid var(--surface-color);
-  padding: 30px;
+  padding: 10px;
   box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.1);
   margin-top: -60px;
   transition: 0.3s;
