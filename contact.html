@@ -34,6 +34,18 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+  <style>
+    /* Change cursor for disabled button */
+    .custom-disabled-btn {
+      pointer-events: none; /* Disable clicking */
+      cursor: not-allowed; /* Default cursor for disabled buttons */
+    }
+  
+    /* Add a custom hover effect */
+    .custom-disabled-btn:hover {
+      cursor: pointer; /* Change cursor to pointer when hovering */
+    }
+  </style>  
 </head>
 
 <body class="contact-page">
@@ -91,7 +103,7 @@
           <div class="row d-flex justify-content-center text-center">
             <div class="col-lg-8">
               <h1>Contact</h1>
-              <p class="mb-0">Odio et unde deleniti. Deserunt numquam exercitationem. Officiis quo odio sint voluptas consequatur ut a odio voluptatem. Sit dolorum debitis veritatis natus dolores. Quasi ratione sint. Sit quaerat ipsum dolorem.</p>
+              <p class="mb-0">Contact With Us To Create The Better Future For Your Child.</p>
             </div>
           </div>
         </div>
@@ -173,7 +185,8 @@
                   <div class="error-message"></div>
                   <div class="sent-message">Your message has been sent. Thank you!</div>
 
-                  <button type="submit">Send Message</button>
+                  <button type="submit" disabled="disabled" class="custom-disabled-btn">Send Message</button>
+                  this feature is currently not working
                 </div>
 
               </div>
