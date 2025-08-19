@@ -75,7 +75,8 @@
 
   // Fetch CSV and convert to JSON
   async function fetchCSVAndCache(lastUpdated) {
-    const res = await fetch(CSV_URL);
+    const res = await fetch(https://docs.google.com/spreadsheets/d/e/2PACX-1vQBbb8DFfrmOmlRCk0AswJMsu0Lo1qE8Of8-Gxcwsbjyo-a7FmNrDdJC50rKU1-Wr0An1BcPnEUgTp2/pub?output=csv
+);
     const text = await res.text();
     const rows = text.split("\n").map(r => r.split(","));
 
