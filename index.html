@@ -45,7 +45,65 @@
   * Updated: Aug 07 2024 with Bootstrap v5.3.3
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
+  
   ======================================================== -->
+  <script>
+  const API_KEY = "YOUR_API_KEY_HERE"; // 👈 Replace with your API key
+  const FILE_ID = "YOUR_SHEET_FILE_ID_HERE"; // 👈 Replace with your Google Sheet file ID
+  const CSV_URL = `https://docs.google.com/spreadsheets/d/${FILE_ID}/pub?output=csv`;
+
+  // Check last modified time from Drive API
+  async function checkForUpdates() {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=modifiedTime&key=${API_KEY}`
+    );
+    const data = await res.json();
+    const lastUpdated = data.modifiedTime;
+
+    // Compare with stored version
+    const cachedVersion = localStorage.getItem("lastUpdated");
+
+    if (cachedVersion !== lastUpdated) {
+      console.log("🔄 New update found, fetching fresh CSV...");
+      await fetchCSVAndCache(lastUpdated);
+    } else {
+      console.log("✅ Using cached data");
+      const cachedData = JSON.parse(localStorage.getItem("sheetData"));
+      renderData(cachedData);
+    }
+  }
+
+  // Fetch CSV and convert to JSON
+  async function fetchCSVAndCache(lastUpdated) {
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    const rows = text.split("\n").map(r => r.split(","));
+
+    // Simple JSON (first row = headers)
+    const headers = rows[0];
+    const json = rows.slice(1).map(row => {
+      let obj = {};
+      row.forEach((val, i) => (obj[headers[i]] = val));
+      return obj;
+    });
+
+    // Cache locally
+    localStorage.setItem("lastUpdated", lastUpdated);
+    localStorage.setItem("sheetData", JSON.stringify(json));
+
+    renderData(json);
+  }
+
+  // Example: render data to console (replace with your UI code)
+  function renderData(data) {
+    console.log("📊 Sheet Data:", data);
+    document.body.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  }
+
+  // Run on page load
+  checkForUpdates();
+</script>
+
 </head>
 
 <body class="index-page">
