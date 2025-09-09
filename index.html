@@ -11,11 +11,11 @@
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VF9HY1JJMH"></script>
   <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-VF9HY1JJMH');
+    gtag('config', 'G-VF9HY1JJMH');
   </script>
 
   <!-- Favicons -->
@@ -47,62 +47,7 @@
   * License: https://bootstrapmade.com/license/
   
   ======================================================== -->
-  <script>
-  const API_KEY = "AIzaSyC3y0KD37rSfRMtm-FNOQIoV474qrbq7iI"; // 👈 Replace with your API key
-  const FILE_ID = "1XuqRcLVFdwETOj9JtOYo6ddENjE0o69e-e8Be1ciZSM"; // 👈 Replace with your Google Sheet file ID
-  const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQBbb8DFfrmOmlRCk0AswJMsu0Lo1qE8Of8-Gxcwsbjyo-a7FmNrDdJC50rKU1-Wr0An1BcPnEUgTp2/pub?output=csv`;
 
-  // Check last modified time from Drive API
-  async function checkForUpdates() {
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=modifiedTime&key=${API_KEY}`
-    );
-    const data = await res.json();
-    const lastUpdated = data.modifiedTime;
-
-    // Compare with stored version
-    const cachedVersion = localStorage.getItem("lastUpdated");
-
-    if (cachedVersion !== lastUpdated) {
-      console.log("🔄 New update found, fetching fresh CSV...");
-      await fetchCSVAndCache(lastUpdated);
-    } else {
-      console.log("✅ Using cached data");
-      const cachedData = JSON.parse(localStorage.getItem("sheetData"));
-      renderData(cachedData);
-    }
-  }
-
-  // Fetch CSV and convert to JSON
-  async function fetchCSVAndCache(lastUpdated) {
-    const res = await fetch(CSV_URL);
-    const text = await res.text();
-    const rows = text.split("\n").map(r => r.split(","));
-
-    // Simple JSON (first row = headers)
-    const headers = rows[0];
-    const json = rows.slice(1).map(row => {
-      let obj = {};
-      row.forEach((val, i) => (obj[headers[i]] = val));
-      return obj;
-    });
-
-    // Cache locally
-    localStorage.setItem("lastUpdated", lastUpdated);
-    localStorage.setItem("sheetData", JSON.stringify(json));
-
-    renderData(json);
-  }
-
-  // Example: render data to console (replace with your UI code)
-  function renderData(data) {
-    console.log("📊 Sheet Data:", data);
-    document.body.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-  }
-
-  // Run on page load
-  checkForUpdates();
-</script>
 
 </head>
 
@@ -116,6 +61,7 @@
         <!-- <img src="assets/img/logo.png" alt=""> -->
         <h1 class="sitename">VMS</h1>
       </a>
+
 
       <nav id="navmenu" class="navmenu">
         <ul>
@@ -334,7 +280,9 @@
     </div>
 
     </section><!-- /Why Us Section -->
-
+    <div class="container" data-aos="fade-up">
+      <div id="events-container"></div>
+    </div>
     <!-- Features Section -->
     <section id="features" class="features section">
 
@@ -546,7 +494,8 @@
 
           <div class="col-lg-4 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="100">
             <div class="member">
-              <img style="height: 300px;" src="assets/img/trainers/manag3er.jpg" class="img-fluid" loading="lazy" alt="">
+              <img style="height: 300px;" src="assets/img/trainers/manag3er.jpg" class="img-fluid" loading="lazy"
+                alt="">
               <div class="member-content">
                 <h4>Mr. Ravi Verma </h4>
                 <span>Manager</span>
@@ -565,7 +514,8 @@
 
           <div class="col-lg-4 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="200">
             <div class="member">
-              <img style="height: 300px;" src="assets/img/trainers/director.jpg" loading="lazy" class="img-fluid" alt="">
+              <img style="height: 300px;" src="assets/img/trainers/director.jpg" loading="lazy" class="img-fluid"
+                alt="">
               <div class="member-content">
                 <h4>Mrs. Sushila Devi Verma </h4>
                 <span>Director</span>

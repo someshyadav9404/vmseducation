@@ -15,7 +15,9 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
 
   <!-- Vendor CSS Files -->
   <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -34,6 +36,123 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+  <script>
+    const API_KEY = "AIzaSyC3y0KD37rSfRMtm-FNOQIoV474qrbq7iI";
+    const FILE_ID = "1jqepBhnynr_TOmXVqWIGo5sIqBKsgv6vxkZ9SIUY9Hw";
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vSB-2IiPNXdtTOY-f4zIh9HaRWFMLJckGtwGf5BWbxJMa3_Ug3br3MP0wexFOupvPNF34aqomso5Yaw/pub?output=csv`;
+
+    // Check last modified + cache expiry
+    async function checkForUpdates() {
+      const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=modifiedTime&key=${API_KEY}`
+      );
+      const data = await res.json();
+      const lastUpdated = data.modifiedTime;
+
+      const cachedVersion = localStorage.getItem("lastUpdated");
+      const cachedTime = localStorage.getItem("cachedTime");
+      const now = Date.now();
+
+      // 30 days in ms
+      const MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+
+      if (!cachedVersion || !cachedTime || (now - cachedTime) > MAX_AGE || cachedVersion !== lastUpdated) {
+        console.log("🔄 Fetching fresh CSV (update detected or cache expired)...");
+        await fetchCSVAndCache(lastUpdated, now);
+      } else {
+        console.log("✅ Using cached data");
+        const cachedData = JSON.parse(localStorage.getItem("sheetData"));
+        renderData(cachedData);
+      }
+    }
+
+    // Fetch CSV and cache
+    async function fetchCSVAndCache(lastUpdated, now) {
+      const res = await fetch(CSV_URL);
+      const text = await res.text();
+      const rows = text.split("\n").map(r => r.split(","));
+
+      const headers = rows[0];
+      const json = rows.slice(1).map(row => {
+        let obj = {};
+        row.forEach((val, i) => (obj[headers[i]] = val));
+        return obj;
+      });
+
+      // Cache version + timestamp + data
+      localStorage.setItem("lastUpdated", lastUpdated);
+      localStorage.setItem("cachedTime", now);
+      localStorage.setItem("sheetData", JSON.stringify(json));
+
+      renderData(json);
+    }
+
+    // Render data with responsive, lazy-loading, object-fit, WebP
+    function renderData(data) {
+      console.log(data)
+      const container = document.getElementById("events-container");
+      container.innerHTML = "";
+
+      const row = document.createElement("div");
+      row.className = "row";
+      container.appendChild(row);
+
+      data.forEach((event, index) => {
+        const col = document.createElement("div");
+        col.className = "col-12 col-md-6 d-flex align-items-stretch mb-4";
+
+        // <picture> element for WebP + fallback
+        col.innerHTML = `
+      <div class="card w-100">
+        <div class="card-img">
+          <div style="position:relative; width:100%; aspect-ratio:3/2; overflow:hidden; border-radius:8px;">
+            <picture>
+
+        <img src="${event['event photo']}" 
+            alt="${event['event name']}" 
+            loading="lazy"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; display:block;">
+
+            </picture>
+          </div>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">
+            <a href="#">${event["event name"]}</a>
+          </h5>
+          <p class="fst-italic text-center">${event["event date"]}</p>
+          <p class="card-text">${event["event about"]}</p>
+        </div>
+      </div>
+    `;
+
+        row.appendChild(col);
+      });
+
+      console.log("✅ Rendering complete!");
+    }
+
+    // Optional: Advanced lazy-loading
+    document.addEventListener("DOMContentLoaded", () => {
+      const lazyImages = document.querySelectorAll("img[loading='lazy']");
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) img.src = img.dataset.src;
+            if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+            obs.unobserve(img);
+          }
+        });
+      });
+
+      lazyImages.forEach(img => observer.observe(img));
+    });
+
+    // Run on page load
+    checkForUpdates();
+  </script>
+
 </head>
 
 <body class="events-page">
@@ -47,6 +166,7 @@
         <h1 class="sitename">VMS</h1>
       </a>
 
+
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="index.html">Home<br></a></li>
@@ -59,7 +179,7 @@
             <ul>
               <li><a href="#">Dropdown 1</a></li>
               <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i
-                    class="bi bi-chevron-down toggle-dropdown"></i></a>
+                class="bi bi-chevron-down toggle-dropdown"></i></a>
                 <ul>
                   <li><a href="#">Deep Dropdown 1</a></li>
                   <li><a href="#">Deep Dropdown 2</a></li>
@@ -79,7 +199,7 @@
       </nav>
 
       <a class="btn-getstarted" href="courses.html">Get Started</a>
-      
+
     </div>
   </header>
   <main class="main">
@@ -91,7 +211,8 @@
           <div class="row d-flex justify-content-center text-center">
             <div class="col-lg-8">
               <h1>Events</h1>
-              <p class="mb-0">Check out the highlights from our past events and get a sneak peek of what’s coming next!.</p>
+              <p class="mb-0">Check out the highlights from our past events and get a sneak peek of what’s coming next!.
+              </p>
             </div>
           </div>
         </div>
@@ -116,12 +237,15 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/Sansad Khel Mahakumbh 12.04.2025.jpeg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Sansad Khel Mahakumbh</a></h5>
                 <p class="fst-italic text-center">2025, April 12th</p>
-                <p class="card-text">""Sansad Khel Mahakumbh was organized to promote sports and fitness among youth, with students competing in various athletic and team events. The initiative, supported by local leaders, inspired young talents to showcase their skills and embrace a healthy lifestyle.
-!".</p>
+                <p class="card-text">""Sansad Khel Mahakumbh was organized to promote sports and fitness among youth,
+                  with students competing in various athletic and team events. The initiative, supported by local
+                  leaders, inspired young talents to showcase their skills and embrace a healthy lifestyle.
+                  !".</p>
               </div>
             </div>
           </div>
@@ -129,12 +253,14 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/earth day 22 04 25.jpeg" alt="...">
-                </div>
+              </div>
               <div class="card-body">
-                <h5 class="card-title"><a href=""> Earth day  </a></h5>
+                <h5 class="card-title"><a href=""> Earth day </a></h5>
                 <p class="fst-italic text-center">2025, April 22th</p>
-                <p class="card-text">"Our school marked Earth Day with a vibrant eco-fair showcasing student projects on sustainability. Interactive activities and a nature walk helped raise awareness about protecting our environment.
-!"</p>
+                <p class="card-text">"Our school marked Earth Day with a vibrant eco-fair showcasing student projects on
+                  sustainability. Interactive activities and a nature walk helped raise awareness about protecting our
+                  environment.
+                  !"</p>
               </div>
             </div>
 
@@ -142,19 +268,23 @@
         </div>
 
 
-      </div>      <div class="container" data-aos="fade-up">
+      </div>
+      <div class="container" data-aos="fade-up">
 
         <div class="row">
           <div class="col-md-6 d-flex align-items-stretch">
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/earth.jpeg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Earth day </a></h5>
                 <p class="fst-italic text-center">2025, April 22th</p>
-                <p class="card-text">""Earth Day was celebrated in our school with tree plantation and awareness programs on environmental conservation. Students participated in poster-making and took pledges to protect the planet.
-!".</p>
+                <p class="card-text">""Earth Day was celebrated in our school with tree plantation and awareness
+                  programs on environmental conservation. Students participated in poster-making and took pledges to
+                  protect the planet.
+                  !".</p>
               </div>
             </div>
           </div>
@@ -162,12 +292,14 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/SBI Scholar Quize 07.05.2025.jpeg" alt="...">
-                </div>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">SBI Scholar Quize</a></h5>
                 <p class="fst-italic text-center">2025, May 7th</p>
-                <p class="card-text">"Our school hosted the SBI Scholarship Quiz, encouraging students to showcase their knowledge and compete for academic rewards. The quiz saw enthusiastic participation, with winners receiving certificates and scholarship opportunities from SBI.
-. Together, we honor their contributions and inspire equality for a brighter future!"</p>
+                <p class="card-text">"Our school hosted the SBI Scholarship Quiz, encouraging students to showcase their
+                  knowledge and compete for academic rewards. The quiz saw enthusiastic participation, with winners
+                  receiving certificates and scholarship opportunities from SBI.
+                  . Together, we honor their contributions and inspire equality for a brighter future!"</p>
               </div>
             </div>
 
@@ -175,18 +307,21 @@
         </div>
 
 
-      </div>      <div class="container" data-aos="fade-up">
+      </div>
+      <div class="container" data-aos="fade-up">
 
         <div class="row">
           <div class="col-md-6 d-flex align-items-stretch">
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/Women's Day Ekana Stadium WPL UP vs RCB.jpeg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Ekana Stadium WPL UP vs RCB</a></h5>
                 <p class="fst-italic text-center">2025, March 8th</p>
-                <p class="card-text">""Relive the excitement of the UP vs RCB showdown at Ekana Stadium, where cricket met unforgettable moments. A perfect blend of passion and sportsmanship under one roof!".</p>
+                <p class="card-text">""Relive the excitement of the UP vs RCB showdown at Ekana Stadium, where cricket
+                  met unforgettable moments. A perfect blend of passion and sportsmanship under one roof!".</p>
               </div>
             </div>
           </div>
@@ -194,11 +329,12 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/Women's Day Ekana Stadium WPL UP vs RCB3.jpeg" alt="...">
-                </div>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Women's Day </a></h5>
                 <p class="fst-italic text-center">2025, March 8th</p>
-                <p class="card-text">"Celebrating the power, resilience, and achievements of women everywhere on this Women’s Day. Together, we honor their contributions and inspire equality for a brighter future!"</p>
+                <p class="card-text">"Celebrating the power, resilience, and achievements of women everywhere on this
+                  Women’s Day. Together, we honor their contributions and inspire equality for a brighter future!"</p>
               </div>
             </div>
 
@@ -214,11 +350,14 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/SCIENCE EXHIBITION 2.jpeg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Science Exhibition</a></h5>
                 <p class="fst-italic text-center">2025, february 28th</p>
-                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young minds shaping a brighter tomorrow!".</p>
+                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual
+                  Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young
+                  minds shaping a brighter tomorrow!".</p>
               </div>
             </div>
           </div>
@@ -230,7 +369,9 @@
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Science Exhibition </a></h5>
                 <p class="fst-italic text-center">2025, February 28th</p>
-                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young minds shaping a brighter tomorrow!"</p>
+                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual
+                  Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young
+                  minds shaping a brighter tomorrow!"</p>
               </div>
             </div>
 
@@ -241,11 +382,13 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/26 jan 2025.jpg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Flag Hosting </a></h5>
                 <p class="fst-italic text-center">Sunday, January 26th</p>
-                <p class="card-text">Dear students and teachers, as we hoist our national flag today, let us salute the sacrifices behind its glory. May it always inspire us to uphold unity, integrity, and patriotism.</p>
+                <p class="card-text">Dear students and teachers, as we hoist our national flag today, let us salute the
+                  sacrifices behind its glory. May it always inspire us to uphold unity, integrity, and patriotism.</p>
               </div>
             </div>
           </div>
@@ -257,7 +400,9 @@
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Republic Day </a></h5>
                 <p class="fst-italic text-center">Sunday, January 26th</p>
-                <p class="card-text">Dear everyone, on this proud occasion of Republic Day, let us remember the values of justice, liberty, and equality that our Constitution upholds. May we always strive to build a stronger and united nation..</p>
+                <p class="card-text">Dear everyone, on this proud occasion of Republic Day, let us remember the values
+                  of justice, liberty, and equality that our Constitution upholds. May we always strive to build a
+                  stronger and united nation..</p>
               </div>
             </div>
 
@@ -276,7 +421,8 @@
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Welcome to Annual Fest </a></h5>
                 <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text">Welcome to our Annual Fest!  for a day filled with excitement, creativity, and unforgettable memories as we celebrate the talents and achievements of our students. 🎉📚
+                <p class="card-text">Welcome to our Annual Fest! for a day filled with excitement, creativity, and
+                  unforgettable memories as we celebrate the talents and achievements of our students. 🎉📚
 
                 </p>
               </div>
@@ -286,11 +432,15 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/WhatsApp Image 2024-12-19 at 16.49.04_c1f000b1.jpg" alt="...">
-              </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Annual Function</a></h5>
                 <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text">We are thrilled to invite you to a day of celebration, creativity, and camaraderie at our Annual Fest. This event is a showcase of our students' incredible talents and achievements, featuring a variety of performances, exhibitions, and activities that promise to inspire and entertain.</p>
+                <p class="card-text">We are thrilled to invite you to a day of celebration, creativity, and camaraderie
+                  at our Annual Fest. This event is a showcase of our students' incredible talents and achievements,
+                  featuring a variety of performances, exhibitions, and activities that promise to inspire and
+                  entertain.</p>
               </div>
             </div>
 
@@ -305,7 +455,8 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/award.jpg" alt="...">
-              </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Annual Function Winner</a></h5>
                 <p class="fst-italic text-center">Sunday, December 17th</p>
@@ -317,11 +468,13 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/award2.jpg" alt="...">
-             </center> </div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href=""> Annual Function Award Distribution</a></h5>
                 <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text"> Thank you so much Mr. Rajesh kumar Tiwari for conducting this ceremony so beautifully.</p>
+                <p class="card-text"> Thank you so much Mr. Rajesh kumar Tiwari for conducting this ceremony so
+                  beautifully.</p>
               </div>
             </div>
 
@@ -336,7 +489,8 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/P T Class.jpg" alt="...">
-           </center>   </div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">P T Class</a></h5>
                 <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
@@ -348,7 +502,8 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/childrenDay.jpg" alt="...">
-             </center> </div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">ChildrenDay</a></h5>
                 <p class="fst-italic text-center">Sunday, November 15th at 7:00 pm</p>
@@ -360,15 +515,16 @@
         </div>
 
       </div>
-      
+
       <div class="container" data-aos="fade-up">
 
         <div class="row">
           <div class="col-md-6 d-flex align-items-stretch">
             <div class="card">
               <div class="card-img">
-               <center><img src="assets/img/Tobacc Free Youth Campaign (Pledge).jpg" alt="...">
-              </center> </div>
+                <center><img src="assets/img/Tobacc Free Youth Campaign (Pledge).jpg" alt="...">
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Tobacc Free Youth Campaign</a></h5>
                 <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
@@ -380,7 +536,8 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/Blue World Water Park.jpg" alt="...">
-              </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Blue World Water Park</a></h5>
                 <p class="fst-italic text-center">Sunday, November 15th at 7:00 pm</p>
@@ -399,7 +556,8 @@
             <div class="card">
               <div class="card-img">
                 <center><img src="assets/img/Rangoli.jpg" alt="...">
-                </center></div>
+                </center>
+              </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Rangoli</a></h5>
                 <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
@@ -423,6 +581,9 @@
         </div>
 
       </div>
+      <div class="container" data-aos="fade-up">
+        <div id="events-container"></div>
+      </div>
 
     </section><!-- /Events Section -->
 
@@ -438,7 +599,7 @@
           <div class="footer-contact pt-3">
             <p>
               NaubastaKalan, Goila, Chinhat
-              </p>
+            </p>
             <p> Lucknow. 226028</p>
             <p class="mt-3"><strong>Phone:</strong> <span> +91 9336096300</span></p>
             <p class="mt-3"><strong>Phone:</strong> <span> 05224027469</span></p>
@@ -500,7 +661,8 @@
 
 
   <!-- Scroll Top -->
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
+      class="bi bi-arrow-up-short"></i></a>
 
   <!-- Preloader -->
   <div id="preloader"></div>

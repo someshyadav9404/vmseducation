@@ -58,6 +58,122 @@
       object-position: center;
     }
   </style>
+<script>
+const TEACHERS_FILE_ID = "1-3Ag0Gs5xS0tJx9-WByQNtKtQuz_SvNFSZt_IdJkzCQ";
+const TEACHERS_CSV_URL = `https://docs.google.com/spreadsheets/d/e/2PACX-1vSCYhImtVwSPR39T786RkESxcbjDgpD42yAn5W4R1qZpfJUnxmGGtTQ195G5vOju6t9zHvOEGeTamOf/pub?output=csv`;
+const API_KEY = "AIzaSyC3y0KD37rSfRMtm-FNOQIoV474qrbq7iI";
+
+// Cache settings
+const MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
+const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Check for updates
+async function checkTeachersUpdates() {
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${TEACHERS_FILE_ID}?fields=modifiedTime&key=${API_KEY}`);
+    const data = await res.json();
+    const lastUpdated = data.modifiedTime;
+
+    const cachedVersion = localStorage.getItem("teachersLastUpdated");
+    const cachedTime = localStorage.getItem("teachersCachedTime");
+    const now = Date.now();
+
+    if (!cachedVersion || !cachedTime || (now - cachedTime) > MAX_AGE || cachedVersion !== lastUpdated) {
+      console.log("🔄 Fetching fresh teachers CSV...");
+      await fetchTeachersCSV(lastUpdated, now);
+    } else {
+      console.log("✅ Using cached teachers data");
+      const cachedData = JSON.parse(localStorage.getItem("teachersData"));
+      renderTeachers(cachedData);
+    }
+  } catch (err) {
+    console.error("Error checking teachers updates:", err);
+  }
+}
+
+// Fetch CSV and cache
+async function fetchTeachersCSV(lastUpdated, now) {
+  try {
+    const res = await fetch(TEACHERS_CSV_URL);
+    const text = await res.text();
+    const rows = text.split("\n").map(r => r.split(","));
+    const headers = rows[0];
+
+    const json = rows.slice(1).map(row => {
+      let obj = {};
+      row.forEach((val, i) => (obj[headers[i]] = val));
+      return obj;
+    });
+
+    // Cache
+    localStorage.setItem("teachersLastUpdated", lastUpdated);
+    localStorage.setItem("teachersCachedTime", now);
+    localStorage.setItem("teachersData", JSON.stringify(json));
+
+    renderTeachers(json);
+  } catch (err) {
+    console.error("Error fetching teachers CSV:", err);
+  }
+}
+
+// Render teachers
+function renderTeachers(data) {
+  console.log(data)
+  const container = document.getElementById("teachers-container");
+  container.innerHTML = "";
+
+  data.forEach(teacher => {
+    const col = document.createElement("div");
+    col.className = "col-lg-4 col-md-6 member mb-4";
+
+    col.innerHTML = `
+      <div class="member text-center" data-aos="fade-up">
+        <div class="member-img" style="overflow:hidden; border-radius:8px;">
+          <picture>
+            <source srcset="${teacher['teacher photo'].replace(/\.(jpg|jpeg|png)$/, '.webp')}" type="image/webp">
+            <img src="${teacher['teacher photo']}" 
+                 class="img-fluid" 
+                 alt="${teacher['teacher name']}" 
+                 loading="lazy"
+                 style="display:block; width:100%; height:auto; object-fit:cover;">
+          </picture>
+        </div>
+        <div class="member-info mt-2">
+          <h4>${teacher['teacher name']}</h4>
+          <span>${teacher['teacher qualification']}</span>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(col);
+  });
+
+  console.log("✅ Teachers rendered!");
+}
+
+// Optional: lazy-loading via IntersectionObserver
+document.addEventListener("DOMContentLoaded", () => {
+  const lazyImages = document.querySelectorAll("img[loading='lazy']");
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        if (img.dataset.src) img.src = img.dataset.src;
+        if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+        obs.unobserve(img);
+      }
+    });
+  });
+
+  lazyImages.forEach(img => observer.observe(img));
+});
+
+// Run on page load
+document.addEventListener("DOMContentLoaded", checkTeachersUpdates);
+
+// Poll periodically
+setInterval(checkTeachersUpdates, POLL_INTERVAL);
+</script>
 
 
 </head>
@@ -146,12 +262,6 @@
           <div class="col-lg-4 col-md-6 member" data-aos="fade-up" data-aos-delay="100">
             <div class="member-img">
               <img src="assets/img/team/anshika dipl civil.jpg" class="img-fluid" alt="">
-              <div class="social">
-                <a href="#"><i class="bi bi-twitter-x"></i></a>
-                <a href="#"><i class="bi bi-facebook"></i></a>
-                <a href="#"><i class="bi bi-instagram"></i></a>
-                <a href="#"><i class="bi bi-linkedin"></i></a>
-              </div>
             </div>
             <div class="member-info text-center">
               <h4>Anshika Verma</h4>
@@ -388,6 +498,13 @@
             </div>
 
           </div>
+          <section id="teachers" class="team section-bg">
+            <div class="container">
+              <div class="row" id="teachers-container">
+                <!-- Teachers cards will be inserted here -->
+              </div>
+            </div>
+          </section>
 
 
         </div>
