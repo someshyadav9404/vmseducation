@@ -98,6 +98,69 @@
 
     </div>
   </header>
+  
+
+<!-- Notices Section -->
+<section id="notices" class="notices section-bg" style="display:none; padding:10px;">
+  <div class="container" style="padding: 5px 0;">
+    <div class="section-title" style="padding-bottom: 0px; text-align:center;">
+      <h2 style="font-size: 18px; margin: 0; padding: 0;">Notices</h2>
+    </div>
+
+    <!-- Horizontal marquee -->
+    <marquee behavior="scroll" direction="left" scrollamount="5" id="notice-marquee" 
+      style="color: #720707; font-weight: 500; font-size: 15px; line-height: 20px; display:block; width:100%; height: 20px;">
+      <!-- Notices will be injected here -->
+    </marquee>
+  </div>
+</section>
+
+<script>
+  const NOTICE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRv9WJegDwx4LvU2zuRwgULxrRQaOme3A3J4nEE9ntC0vNLRaDQRlu257e3fZyM-SjT_rmu54L9o57K/pub?output=csv";
+
+  async function fetchNotices() {
+    try {
+      const res = await fetch(NOTICE_CSV_URL);
+      const text = await res.text();
+      const rows = text.split("\n").map(r => r.split(","));
+
+      // Trim headers + values
+      const headers = rows[0].map(h => h.trim());
+      const json = rows.slice(1).map(row => {
+        let obj = {};
+        row.forEach((val, i) => (obj[headers[i]] = val.trim()));
+        return obj;
+      });
+
+      renderMarquee(json);
+    } catch (err) {
+      console.error("⚠️ Error fetching notices", err);
+    }
+  }
+
+  function renderMarquee(notices) {
+    const section = document.getElementById("notices");
+    const marquee = document.getElementById("notice-marquee");
+
+    // Filter only valid rows with Description
+    const validNotices = notices.filter(n => n.Description && n.Description.trim() !== "");
+
+    if (validNotices.length === 0) {
+      section.style.display = "none"; // Hide if no notice
+      return;
+    }
+
+    // Show section
+    section.style.display = "block";
+
+    // Build marquee text with bullets
+    marquee.innerHTML = validNotices
+      .map(n => `&nbsp; • ${n.Description.trim()} &nbsp;&nbsp;&nbsp;`)
+      .join("");
+  }
+
+  fetchNotices();
+</script>
   <!-- <hr style="color: #11db58;height: 5px;"> -->
   <main class="main">
     <!-- <marquee style="color: #f60707;" behavior="Scroll" direction="left"> <b> Dear Parents,
