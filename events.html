@@ -67,25 +67,46 @@
     }
 
     // Fetch CSV and cache
-    async function fetchCSVAndCache(lastUpdated, now) {
-      const res = await fetch(CSV_URL);
-      const text = await res.text();
-      const rows = text.split("\n").map(r => r.split(","));
+async function fetchCSVAndCache(lastUpdated, now) {
+  const res = await fetch(CSV_URL);
+  const text = await res.text();
 
-      const headers = rows[0];
-      const json = rows.slice(1).map(row => {
-        let obj = {};
-        row.forEach((val, i) => (obj[headers[i]] = val));
-        return obj;
-      });
+  // --- CSV Parser (handles commas inside quotes) ---
+  const lines = text.split("\n").filter(line => line.trim() !== "");
+  const headers = lines[0].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
+    .map(h => h.replace(/^"|"$/g, "").trim());
 
-      // Cache version + timestamp + data
-      localStorage.setItem("lastUpdated", lastUpdated);
-      localStorage.setItem("cachedTime", now);
-      localStorage.setItem("sheetData", JSON.stringify(json));
+  const json = lines.slice(1).map(line => {
+    const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+    let obj = {};
 
-      renderData(json);
-    }
+    headers.forEach((h, i) => {
+      let val = values[i] 
+        ? values[i].replace(/^"|"$/g, "").replace(/""/g, '"').trim() 
+        : "";
+
+      // --- Convert Google Drive link if column is "event photo" ---
+      if (h.toLowerCase().includes("photo") && val.includes("drive.google.com")) {
+        const match = val.match(/[-\w]{25,}/); // extract FILE_ID
+        if (match) {
+          val = `https://drive.google.com/uc?export=view&id=${match[0]}`;
+        }
+      }
+
+      obj[h] = val;
+    });
+
+    return obj;
+  });
+
+  // --- Cache version + timestamp + data ---
+  localStorage.setItem("lastUpdated", lastUpdated);
+  localStorage.setItem("cachedTime", now);
+  localStorage.setItem("sheetData", JSON.stringify(json));
+
+  renderData(json);
+}
+
 
     // Render data with responsive, lazy-loading, object-fit, WebP
     function renderData(data) {
@@ -230,357 +251,6 @@
     <!-- Events Section -->
     <section id="events" class="events section">
 
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Sansad Khel Mahakumbh 12.04.2025.jpeg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Sansad Khel Mahakumbh</a></h5>
-                <p class="fst-italic text-center">2025, April 12th</p>
-                <p class="card-text">""Sansad Khel Mahakumbh was organized to promote sports and fitness among youth,
-                  with students competing in various athletic and team events. The initiative, supported by local
-                  leaders, inspired young talents to showcase their skills and embrace a healthy lifestyle.
-                  !".</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/earth day 22 04 25.jpeg" alt="...">
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Earth day </a></h5>
-                <p class="fst-italic text-center">2025, April 22th</p>
-                <p class="card-text">"Our school marked Earth Day with a vibrant eco-fair showcasing student projects on
-                  sustainability. Interactive activities and a nature walk helped raise awareness about protecting our
-                  environment.
-                  !"</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/earth.jpeg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Earth day </a></h5>
-                <p class="fst-italic text-center">2025, April 22th</p>
-                <p class="card-text">""Earth Day was celebrated in our school with tree plantation and awareness
-                  programs on environmental conservation. Students participated in poster-making and took pledges to
-                  protect the planet.
-                  !".</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/SBI Scholar Quize 07.05.2025.jpeg" alt="...">
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">SBI Scholar Quize</a></h5>
-                <p class="fst-italic text-center">2025, May 7th</p>
-                <p class="card-text">"Our school hosted the SBI Scholarship Quiz, encouraging students to showcase their
-                  knowledge and compete for academic rewards. The quiz saw enthusiastic participation, with winners
-                  receiving certificates and scholarship opportunities from SBI.
-                  . Together, we honor their contributions and inspire equality for a brighter future!"</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Women's Day Ekana Stadium WPL UP vs RCB.jpeg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Ekana Stadium WPL UP vs RCB</a></h5>
-                <p class="fst-italic text-center">2025, March 8th</p>
-                <p class="card-text">""Relive the excitement of the UP vs RCB showdown at Ekana Stadium, where cricket
-                  met unforgettable moments. A perfect blend of passion and sportsmanship under one roof!".</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Women's Day Ekana Stadium WPL UP vs RCB3.jpeg" alt="...">
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Women's Day </a></h5>
-                <p class="fst-italic text-center">2025, March 8th</p>
-                <p class="card-text">"Celebrating the power, resilience, and achievements of women everywhere on this
-                  Women’s Day. Together, we honor their contributions and inspire equality for a brighter future!"</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/SCIENCE EXHIBITION 2.jpeg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Science Exhibition</a></h5>
-                <p class="fst-italic text-center">2025, february 28th</p>
-                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual
-                  Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young
-                  minds shaping a brighter tomorrow!".</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/SCIENCE EXHIBITION.jpeg" alt="..."></center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Science Exhibition </a></h5>
-                <p class="fst-italic text-center">2025, February 28th</p>
-                <p class="card-text">"Class 8 students showcased their creativity and scientific curiosity at the Annual
-                  Science Exhibition, presenting innovative projects that left everyone inspired. A celebration of young
-                  minds shaping a brighter tomorrow!"</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/26 jan 2025.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Flag Hosting </a></h5>
-                <p class="fst-italic text-center">Sunday, January 26th</p>
-                <p class="card-text">Dear students and teachers, as we hoist our national flag today, let us salute the
-                  sacrifices behind its glory. May it always inspire us to uphold unity, integrity, and patriotism.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/26 jan  2025.jpg" alt="..."></center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Republic Day </a></h5>
-                <p class="fst-italic text-center">Sunday, January 26th</p>
-                <p class="card-text">Dear everyone, on this proud occasion of Republic Day, let us remember the values
-                  of justice, liberty, and equality that our Constitution upholds. May we always strive to build a
-                  stronger and united nation..</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/welcome.jpg" alt="..."></center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Welcome to Annual Fest </a></h5>
-                <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text">Welcome to our Annual Fest! for a day filled with excitement, creativity, and
-                  unforgettable memories as we celebrate the talents and achievements of our students. 🎉📚
-
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/WhatsApp Image 2024-12-19 at 16.49.04_c1f000b1.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Annual Function</a></h5>
-                <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text">We are thrilled to invite you to a day of celebration, creativity, and camaraderie
-                  at our Annual Fest. This event is a showcase of our students' incredible talents and achievements,
-                  featuring a variety of performances, exhibitions, and activities that promise to inspire and
-                  entertain.</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/award.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Annual Function Winner</a></h5>
-                <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text"> Thank you so much Mr. Ravi Verma for conducting this ceremony so beautifully.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/award2.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href=""> Annual Function Award Distribution</a></h5>
-                <p class="fst-italic text-center">Sunday, December 17th</p>
-                <p class="card-text"> Thank you so much Mr. Rajesh kumar Tiwari for conducting this ceremony so
-                  beautifully.</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/P T Class.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">P T Class</a></h5>
-                <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
-                <!-- <p class="card-text">Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat</p> -->
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/childrenDay.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">ChildrenDay</a></h5>
-                <p class="fst-italic text-center">Sunday, November 15th at 7:00 pm</p>
-                <!-- <p class="card-text">Sed ut perspiciatis unde omnis iste natus error sit voluptatem doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo</p> -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Tobacc Free Youth Campaign (Pledge).jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Tobacc Free Youth Campaign</a></h5>
-                <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
-                <!-- <p class="card-text">Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat</p> -->
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Blue World Water Park.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Blue World Water Park</a></h5>
-                <p class="fst-italic text-center">Sunday, November 15th at 7:00 pm</p>
-                <!-- <p class="card-text">Sed ut perspiciatis unde omnis iste natus error sit voluptatem doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo</p> -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-      <div class="container" data-aos="fade-up">
-
-        <div class="row">
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/Rangoli.jpg" alt="...">
-                </center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Rangoli</a></h5>
-                <p class="fst-italic text-center">Sunday, September 26th at 7:00 pm</p>
-                <!-- <p class="card-text">Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat</p> -->
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 d-flex align-items-stretch">
-            <div class="card">
-              <div class="card-img">
-                <center><img src="assets/img/9.jpg" alt="..."></center>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><a href="">Happy Janmashtami</a></h5>
-                <p class="fst-italic text-center">Sunday, November 15th at 7:00 pm</p>
-                <!-- <p class="card-text">Sed ut perspiciatis unde omnis iste natus error sit voluptatem doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo</p> -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
       <div class="container" data-aos="fade-up">
         <div id="events-container"></div>
       </div>
