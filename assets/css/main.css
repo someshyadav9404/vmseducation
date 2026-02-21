@@ -750,12 +750,12 @@ h6 {
   background-color: color-mix(in srgb, var(--accent-color), transparent 20%);
   color: var(--contrast-color);
 }
-
+*/ */
 .scroll-top.active {
   visibility: visible;
   opacity: 1;
   bottom: 15px;
-} */ */
+} 
 
 /*--------------------------------------------------------------
 # Disable aos animation delay on mobile devices
