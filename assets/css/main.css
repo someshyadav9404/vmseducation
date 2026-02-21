@@ -723,10 +723,10 @@ h6 {
   }
 }
 
-/*--------------------------------------------------------------
+/* /* --------------------------------------------------------------
 # Scroll Top Button
 --------------------------------------------------------------*/
-.scroll-top {
+/* .scroll-top {
   position: fixed;
   visibility: hidden;
   opacity: 0;
@@ -755,16 +755,16 @@ h6 {
   visibility: visible;
   opacity: 1;
   bottom: 15px;
-}
+} */ */
 
 /*--------------------------------------------------------------
 # Disable aos animation delay on mobile devices
---------------------------------------------------------------*/
-@media screen and (max-width: 768px) {
+/* --------------------------------------------------------------*/
+/* @media screen and (max-width: 768px) {
   [data-aos-delay] {
     transition-delay: 0 !important;
   }
-}
+}  */
 
 /*--------------------------------------------------------------
 # Global Page Titles & Breadcrumbs
